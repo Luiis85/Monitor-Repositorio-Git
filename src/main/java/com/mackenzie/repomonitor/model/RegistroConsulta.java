@@ -2,15 +2,8 @@ package com.mackenzie.repomonitor.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Data;
 import java.time.LocalDateTime;
 
-/*
- * Registra cada chamada feita à API do GitHub.
- * Funciona como um histórico de auditoria: quando foi chamado,
- * qual endereço foi consultado, e se deu certo ou errado.
- */
-@Data
 @Entity
 @Table(name = "registro_consulta")
 public class RegistroConsulta {
@@ -20,15 +13,22 @@ public class RegistroConsulta {
     private Long id;
 
     private LocalDateTime realizadaEm;
-
-    // Resultado da consulta: "SUCESSO", "USUARIO_NAO_ENCONTRADO", "FALHA_REDE"
     private String resultado;
-
-    // O endereço da API que foi chamado (ex: "/users/torvalds")
     private String enderecoConsultado;
 
     @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "usuario_id")
     private DevUser usuario;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public LocalDateTime getRealizadaEm() { return realizadaEm; }
+    public void setRealizadaEm(LocalDateTime realizadaEm) { this.realizadaEm = realizadaEm; }
+    public String getResultado() { return resultado; }
+    public void setResultado(String resultado) { this.resultado = resultado; }
+    public String getEnderecoConsultado() { return enderecoConsultado; }
+    public void setEnderecoConsultado(String enderecoConsultado) { this.enderecoConsultado = enderecoConsultado; }
+    public DevUser getUsuario() { return usuario; }
+    public void setUsuario(DevUser usuario) { this.usuario = usuario; }
 }

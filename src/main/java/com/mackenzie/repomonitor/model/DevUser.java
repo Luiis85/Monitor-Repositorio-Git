@@ -2,25 +2,16 @@ package com.mackenzie.repomonitor.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Data;
 import java.util.List;
 
-/*
- * Representa um usuário do GitHub que está sendo monitorado.
- * Cada vez que alguém importa um perfil do GitHub, um registro
- * dessa classe é criado e salvo como linha na tabela "dev_user".
- */
-@Data
 @Entity
 @Table(name = "dev_user")
 public class DevUser {
 
-    // Chave primária — o banco gera o número automaticamente (1, 2, 3...)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // O login é único: não pode ter dois usuários com o mesmo nome no banco
     @Column(unique = true, nullable = false)
     private String login;
 
@@ -33,18 +24,36 @@ public class DevUser {
     private Integer seguindo;
     private Integer totalRepositorios;
 
-    /*
-     * Relacionamento 1:N com Projeto.
-     * @JsonIgnore evita referência circular na serialização JSON:
-     * sem ele, DevUser tentaria serializar Projeto, que tentaria
-     * serializar DevUser de volta, causando loop infinito.
-     */
     @JsonIgnore
     @OneToMany(mappedBy = "dono", cascade = CascadeType.ALL)
     private List<Projeto> projetos;
 
-    // Histórico de consultas feitas à API do GitHub para esse usuário
     @JsonIgnore
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL)
     private List<RegistroConsulta> consultas;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getLogin() { return login; }
+    public void setLogin(String login) { this.login = login; }
+    public String getNome() { return nome; }
+    public void setNome(String nome) { this.nome = nome; }
+    public String getUrlFoto() { return urlFoto; }
+    public void setUrlFoto(String urlFoto) { this.urlFoto = urlFoto; }
+    public String getBio() { return bio; }
+    public void setBio(String bio) { this.bio = bio; }
+    public String getEmpresa() { return empresa; }
+    public void setEmpresa(String empresa) { this.empresa = empresa; }
+    public String getLocalizacao() { return localizacao; }
+    public void setLocalizacao(String localizacao) { this.localizacao = localizacao; }
+    public Integer getSeguidores() { return seguidores; }
+    public void setSeguidores(Integer seguidores) { this.seguidores = seguidores; }
+    public Integer getSeguindo() { return seguindo; }
+    public void setSeguindo(Integer seguindo) { this.seguindo = seguindo; }
+    public Integer getTotalRepositorios() { return totalRepositorios; }
+    public void setTotalRepositorios(Integer totalRepositorios) { this.totalRepositorios = totalRepositorios; }
+    public List<Projeto> getProjetos() { return projetos; }
+    public void setProjetos(List<Projeto> projetos) { this.projetos = projetos; }
+    public List<RegistroConsulta> getConsultas() { return consultas; }
+    public void setConsultas(List<RegistroConsulta> consultas) { this.consultas = consultas; }
 }

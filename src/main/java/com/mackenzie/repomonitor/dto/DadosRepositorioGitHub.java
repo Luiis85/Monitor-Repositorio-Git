@@ -1,14 +1,7 @@
 package com.mackenzie.repomonitor.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Data;
 
-/*
- * Objeto usado para receber cada repositório na resposta da API do GitHub.
- * A API devolve uma lista desses objetos quando pedimos
- * os repos de um usuário.
- */
-@Data
 public class DadosRepositorioGitHub {
 
     @JsonProperty("name")
@@ -31,4 +24,19 @@ public class DadosRepositorioGitHub {
 
     @JsonProperty("private")
     private Boolean privado;
+
+    public String getNome() { return nome; }
+    public void setNome(String nome) { this.nome = nome; }
+    public String getDescricao() { return descricao; }
+    public void setDescricao(String descricao) { this.descricao = descricao; }
+    public String getUrlGithub() { return urlGithub; }
+    public void setUrlGithub(String urlGithub) { this.urlGithub = urlGithub; }
+    public Integer getEstrelas() { return estrelas; }
+    public void setEstrelas(Integer estrelas) { this.estrelas = estrelas; }
+    public Integer getForks() { return forks; }
+    public void setForks(Integer forks) { this.forks = forks; }
+    public String getLinguagemPrincipal() { return linguagemPrincipal; }
+    public void setLinguagemPrincipal(String linguagemPrincipal) { this.linguagemPrincipal = linguagemPrincipal; }
+    public Boolean getPrivado() { return privado; }
+    public void setPrivado(Boolean privado) { this.privado = privado; }
 }
