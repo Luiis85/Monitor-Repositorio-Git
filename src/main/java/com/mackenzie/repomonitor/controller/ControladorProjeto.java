@@ -20,11 +20,14 @@ public class ControladorProjeto {
     private ProjetoRepository projetoRepository;
 
     // GET /api/projetos — lista todos os projetos salvos
-    @GetMapping
-    @Operation(summary = "Listar todos os projetos salvos")
-    public List<Projeto> listarTodos() {
-        return projetoRepository.findAll();
+   @GetMapping
+@Operation(summary = "Listar todos os projetos salvos")
+public List<Projeto> listarTodos(@RequestParam(required = false) String login) {
+    if (login != null) {
+        return projetoRepository.findByDonoLogin(login);
     }
+    return projetoRepository.findAll();
+}
 
     // GET /api/projetos/{id} — busca um projeto pelo ID
     @GetMapping("/{id}")
