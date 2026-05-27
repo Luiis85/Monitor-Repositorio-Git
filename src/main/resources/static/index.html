@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitor de Repositórios GitHub</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d1117; --surface: #161b22; --border: #30363d;
+      --green: #3fb950; --green-dim: #1a4026; --blue: #58a6ff;
+      --orange: #f0883e; --red: #f85149; --text: #e6edf3; --muted: #8b949e;
+      --font-mono: 'JetBrains Mono', monospace; --font-display: 'Syne', sans-serif;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-mono); min-height: 100vh; }
+    header { border-bottom: 1px solid var(--border); padding: 20px 40px; display: flex; align-items: center; gap: 16px; background: var(--surface); }
+    header h1 { font-family: var(--font-display); font-size: 20px; font-weight: 800; }
+    .badge-mackenzie { margin-left: auto; font-size: 11px; color: var(--muted); border: 1px solid var(--border); padding: 4px 10px; border-radius: 20px; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 40px 20px; }
+    .search-section { margin-bottom: 40px; }
+    .search-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    .search-row { display: flex; gap: 10px; }
+    .search-row input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; color: var(--text); font-family: var(--font-mono); font-size: 15px; outline: none; transition: border-color 0.2s; }
+    .search-row input:focus { border-color: var(--blue); }
+    .search-row input::placeholder { color: var(--muted); }
+    .btn { padding: 12px 24px; border-radius: 8px; border: none; font-family: var(--font-mono); font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity 0.2s, transform 0.1s; }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: var(--green); color: #000; }
+    .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+    .status { font-size: 13px; color: var(--muted); margin-top: 10px; min-height: 20px; }
+    .status.ok { color: var(--green); } .status.erro { color: var(--red); }
+    .grid { display: grid; grid-template-columns: 340px 1fr; gap: 24px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .card-header { padding: 14px 20px; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; }
+    .card-body { padding: 20px; }
+    .perfil-avatar { width: 72px; height: 72px; border-radius: 50%; border: 2px solid var(--border); margin-bottom: 14px; }
+    .perfil-nome { font-family: var(--font-display); font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+    .perfil-login { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+    .perfil-bio { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 16px; border-left: 2px solid var(--border); padding-left: 10px; }
+    .perfil-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .stat { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; }
+    .stat-valor { font-size: 20px; font-weight: 700; color: var(--blue); }
+    .stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .api-status { margin-top: 14px; font-size: 12px; padding: 6px 12px; border-radius: 20px; display: inline-block; }
+    .api-online { background: var(--green-dim); color: var(--green); }
+    .api-offline { background: #3d1a1a; color: var(--red); }
+    .repo-list { display: flex; flex-direction: column; gap: 10px; }
+    .repo-item { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; transition: border-color 0.2s; }
+    .repo-item:hover { border-color: var(--blue); }
+    .repo-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+    .repo-nome { font-size: 14px; font-weight: 600; color: var(--blue); text-decoration: none; }
+    .repo-nome:hover { text-decoration: underline; }
+    .repo-desc { font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 10px; }
+    .repo-bottom { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+    .repo-lang { font-size: 12px; display: flex; align-items: center; gap: 5px; }
+    .lang-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .repo-stars, .repo-forks { font-size: 12px; color: var(--muted); }
+    .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+    .empty-icon { font-size: 40px; margin-bottom: 12px; }
+    .empty p { font-size: 14px; }
+    .loader { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--green); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .tabs { display: flex; border-bottom: 1px solid var(--border); }
+    .tab { padding: 10px 18px; font-size: 13px; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; background: none; border-top: none; border-left: none; border-right: none; font-family: var(--font-mono); }
+    .tab.active { color: var(--text); border-bottom-color: var(--orange); }
+    .tab:hover { color: var(--text); }
+    .tab-content { display: none; padding: 20px; }
+    .tab-content.active { display: block; }
+    .usuario-item { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 8px; cursor: pointer; transition: background 0.15s; }
+    .usuario-item:hover { background: var(--bg); }
+    .usuario-item img { width: 36px; height: 36px; border-radius: 50%; }
+    .usuario-login { font-size: 14px; font-weight: 600; }
+    .usuario-nome { font-size: 12px; color: var(--muted); }
+    @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } header { padding: 16px 20px; } }
+  </style>
+</head>
+<body>
+<header>
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+  <h1>Monitor de Repositórios</h1>
+  <span class="badge-mackenzie">Mackenzie · V7</span>
+</header>
+<div class="container">
+  <div class="search-section">
+    <div class="search-label">Importar perfil do GitHub</div>
+    <div class="search-row">
+      <input type="text" id="inputLogin" placeholder="Ex: torvalds, microsoft, facebook..." onkeydown="if(event.key==='Enter') importarUsuario()"/>
+      <button class="btn btn-primary" onclick="importarUsuario()">Importar</button>
+      <button class="btn btn-secondary" onclick="carregarSalvos()">Ver salvos</button>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+  <div class="grid">
+    <div class="card" id="cardPerfil">
+      <div class="card-header"><span>Perfil</span><span id="relatorioStatus"></span></div>
+      <div class="card-body" id="perfilBody">
+        <div class="empty"><div class="empty-icon">👤</div><p>Importe um usuário<br>para ver o perfil aqui</p></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="tabs">
+        <button class="tab active" onclick="mostrarTab('repos', this)">Repositórios</button>
+        <button class="tab" onclick="mostrarTab('salvos', this)">Usuários Salvos</button>
+      </div>
+      <div class="tab-content active" id="tab-repos">
+        <div id="repoBody"><div class="empty"><div class="empty-icon">📦</div><p>Os repositórios aparecerão<br>após importar um usuário</p></div></div>
+      </div>
+      <div class="tab-content" id="tab-salvos">
+        <div id="salvosBody"><div class="empty"><div class="empty-icon">💾</div><p>Clique em "Ver salvos"<br>para listar os usuários no banco</p></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  const BASE = '';
+  function setStatus(msg, tipo) { const el = document.getElementById('status'); el.className = 'status ' + (tipo||''); el.innerHTML = msg; }
+  function mostrarTab(nome, btn) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + nome).classList.add('active');
+    btn.classList.add('active');
+  }
+  async function importarUsuario() {
+    const login = document.getElementById('inputLogin').value.trim();
+    if (!login) { setStatus('Digite um login do GitHub.', 'erro'); return; }
+    setStatus('<span class="loader"></span> Consultando API do GitHub...', '');
+    try {
+      const res = await fetch(`${BASE}/api/usuarios/${login}`, { method: 'POST' });
+      const usuario = await res.json();
+      if (!res.ok) { setStatus('❌ ' + (usuario.erro || 'Usuário não encontrado.'), 'erro'); return; }
+      setStatus(`✅ ${usuario.nome || usuario.login} importado com sucesso!`, 'ok');
+      renderPerfil(usuario);
+      carregarProjetos();
+    } catch(e) { setStatus('❌ Erro de conexão com o servidor.', 'erro'); }
+  }
+  async function carregarProjetos() {
+    document.getElementById('repoBody').innerHTML = '<div style="padding:20px;color:var(--muted)"><span class="loader"></span> Carregando repositórios...</div>';
+    try {
+      const res = await fetch(`${BASE}/api/projetos`);
+      const projetos = await res.json();
+      renderProjetos(projetos);
+    } catch(e) { document.getElementById('repoBody').innerHTML = '<div class="empty"><p>Erro ao carregar repositórios</p></div>'; }
+  }
+  async function carregarRelatorio(login) {
+    try {
+      const res = await fetch(`${BASE}/api/usuarios/${login}/relatorio`);
+      const rel = await res.json();
+      document.getElementById('relatorioStatus').innerHTML = `<span class="api-status ${rel.statusDaApi === 'ONLINE' ? 'api-online' : 'api-offline'}">● ${rel.statusDaApi}</span>`;
+    } catch(e) {}
+  }
+  async function carregarSalvos() {
+    mostrarTab('salvos', document.querySelectorAll('.tab')[1]);
+    document.getElementById('salvosBody').innerHTML = '<div style="padding:20px;color:var(--muted)"><span class="loader"></span> Carregando...</div>';
+    try {
+      const res = await fetch(`${BASE}/api/usuarios`);
+      const usuarios = await res.json();
+      if (!usuarios.length) { document.getElementById('salvosBody').innerHTML = '<div class="empty"><p>Nenhum usuário salvo ainda</p></div>'; return; }
+      document.getElementById('salvosBody').innerHTML = usuarios.map(u => `
+        <div class="usuario-item" onclick="verUsuario('${u.login}')">
+          <img src="${u.urlFoto}" alt="${u.login}" onerror="this.src='https://github.com/identicons/${u.login}.png'">
+          <div style="flex:1"><div class="usuario-login">${u.login}</div><div class="usuario-nome">${u.nome || '—'}</div></div>
+          <span style="color:var(--muted);font-size:12px">${u.totalRepositorios || 0} repos</span>
+        </div>`).join('');
+    } catch(e) { document.getElementById('salvosBody').innerHTML = '<div class="empty"><p>Erro ao carregar</p></div>'; }
+  }
+  function verUsuario(login) {
+    document.getElementById('inputLogin').value = login;
+    mostrarTab('repos', document.querySelectorAll('.tab')[0]);
+    importarUsuario();
+  }
+  function renderPerfil(u) {
+    document.getElementById('perfilBody').innerHTML = `
+      <img class="perfil-avatar" src="${u.urlFoto}" alt="${u.login}">
+      <div class="perfil-nome">${u.nome || u.login}</div>
+      <div class="perfil-login">@${u.login}</div>
+      ${u.bio ? `<div class="perfil-bio">${u.bio}</div>` : ''}
+      <div class="perfil-stats">
+        <div class="stat"><div class="stat-valor">${formatNum(u.seguidores)}</div><div class="stat-label">seguidores</div></div>
+        <div class="stat"><div class="stat-valor">${formatNum(u.totalRepositorios)}</div><div class="stat-label">repositórios</div></div>
+        <div class="stat"><div class="stat-valor" style="font-size:13px">${u.empresa || '—'}</div><div class="stat-label">empresa</div></div>
+        <div class="stat"><div class="stat-valor" style="font-size:13px">${u.localizacao || '—'}</div><div class="stat-label">localização</div></div>
+      </div>`;
+    carregarRelatorio(u.login);
+  }
+  function renderProjetos(projetos) {
+    if (!projetos.length) { document.getElementById('repoBody').innerHTML = '<div class="empty"><p>Nenhum repositório encontrado</p></div>'; return; }
+    const cores = { 'JavaScript':'#f1e05a','TypeScript':'#2b7489','Python':'#3572A5','Java':'#b07219','C':'#555555','C++':'#f34b7d','Go':'#00ADD8','Rust':'#dea584','Shell':'#89e051' };
+    document.getElementById('repoBody').innerHTML = `<div class="repo-list">` + projetos.map(p => `
+      <div class="repo-item">
+        <div class="repo-top"><a class="repo-nome" href="${p.urlGithub||'#'}" target="_blank">${p.nome}</a></div>
+        ${p.descricao ? `<div class="repo-desc">${p.descricao}</div>` : ''}
+        <div class="repo-bottom">
+          ${p.linguagemPrincipal ? `<span class="repo-lang"><span class="lang-dot" style="background:${cores[p.linguagemPrincipal]||'#8b949e'}"></span>${p.linguagemPrincipal}</span>` : ''}
+          <span class="repo-stars">★ ${formatNum(p.estrelas)}</span>
+          <span class="repo-forks">⑂ ${formatNum(p.forks)}</span>
+        </div>
+      </div>`).join('') + `</div>`;
+  }
+  function formatNum(n) { if (!n && n!==0) return '0'; if (n>=1000) return (n/1000).toFixed(1)+'k'; return n.toString(); }
+</script>
+</body>
+</html>
