@@ -15,7 +15,6 @@ public class Favorito {
     private LocalDateTime favoritadoEm;
     private String observacao;
 
-    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "projeto_id", nullable = false)
     private Projeto projeto;

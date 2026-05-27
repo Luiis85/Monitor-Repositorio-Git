@@ -102,6 +102,7 @@
       <div class="tabs">
         <button class="tab active" onclick="mostrarTab('repos', this)">Repositórios</button>
         <button class="tab" onclick="mostrarTab('salvos', this)">Usuários Salvos</button>
+        <button class="tab" onclick="mostrarTab('favoritos', this)">★ Favoritos</button>
       </div>
       <div class="tab-content active" id="tab-repos">
         <div id="repoBody"><div class="empty"><div class="empty-icon">📦</div><p>Os repositórios aparecerão<br>após importar um usuário</p></div></div>
@@ -109,6 +110,9 @@
       <div class="tab-content" id="tab-salvos">
         <div id="salvosBody"><div class="empty"><div class="empty-icon">💾</div><p>Clique em "Ver salvos"<br>para listar os usuários no banco</p></div></div>
       </div>
+      <div class="tab-content" id="tab-favoritos">
+    <div id="favoritosBody"><div class="empty"><div class="empty-icon">★</div><p>Nenhum favorito ainda</p></div></div>
+    </div>
     </div>
   </div>
 </div>
@@ -190,7 +194,10 @@
     const cores = { 'JavaScript':'#f1e05a','TypeScript':'#2b7489','Python':'#3572A5','Java':'#b07219','C':'#555555','C++':'#f34b7d','Go':'#00ADD8','Rust':'#dea584','Shell':'#89e051' };
     document.getElementById('repoBody').innerHTML = `<div class="repo-list">` + projetos.map(p => `
       <div class="repo-item">
-        <div class="repo-top"><a class="repo-nome" href="${p.urlGithub||'#'}" target="_blank">${p.nome}</a></div>
+        <div class="repo-top">
+        <a class="repo-nome" href="${p.urlGithub||'#'}" target="_blank">${p.nome}</a>
+        <button onclick="favoritar(${p.id})" style="background:none;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:var(--font-mono)">★ Favoritar</button>
+        </div>
         ${p.descricao ? `<div class="repo-desc">${p.descricao}</div>` : ''}
         <div class="repo-bottom">
           ${p.linguagemPrincipal ? `<span class="repo-lang"><span class="lang-dot" style="background:${cores[p.linguagemPrincipal]||'#8b949e'}"></span>${p.linguagemPrincipal}</span>` : ''}
@@ -200,6 +207,45 @@
       </div>`).join('') + `</div>`;
   }
   function formatNum(n) { if (!n && n!==0) return '0'; if (n>=1000) return (n/1000).toFixed(1)+'k'; return n.toString(); }
+
+  async function favoritar(projetoId) {
+    try {
+      const res = await fetch(`${BASE}/api/favoritos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projetoId: projetoId, observacao: 'Favoritado pela interface' })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStatus('★ Projeto favoritado com sucesso!', 'ok');
+        await carregarFavoritos();
+      } else {
+        setStatus('❌ Erro ao favoritar: ' + (data.erro || ''), 'erro');
+      }
+    } catch(e) {
+      setStatus('❌ Erro ao favoritar.', 'erro');
+    }
+}
+async function carregarFavoritos() {
+    mostrarTab('favoritos', document.querySelectorAll('.tab')[2]);
+    document.getElementById('favoritosBody').innerHTML = '<div style="padding:20px;color:var(--muted)"><span class="loader"></span> Carregando...</div>';
+    try {
+        const res = await fetch(`${BASE}/api/favoritos`);
+        const favoritos = await res.json();
+        if (!favoritos.length) {
+            document.getElementById('favoritosBody').innerHTML = '<div class="empty"><div class="empty-icon">★</div><p>Nenhum favorito ainda</p></div>';
+            return;
+        }
+        document.getElementById('favoritosBody').innerHTML = `<div class="repo-list">` + favoritos.map(f => `
+            <div class="repo-item">
+                <div style="font-size:14px;font-weight:600;color:var(--orange)">★ <a href="${f.projeto ? f.projeto.urlGithub : '#'}" target="_blank" style="color:var(--orange);text-decoration:none">${f.projeto ? f.projeto.nome : 'Projeto #' + f.id}</a></div>
+                <div style="font-size:12px;color:var(--muted);margin-top:4px">${f.observacao || '—'}</div>
+                <div style="font-size:11px;color:var(--muted);margin-top:4px">${f.favoritadoEm || ''}</div>
+            </div>`).join('') + `</div>`;
+    } catch(e) {
+        document.getElementById('favoritosBody').innerHTML = '<div class="empty"><p>Erro ao carregar favoritos</p></div>';
+    }
+}
 </script>
 </body>
 </html>
