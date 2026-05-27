@@ -9,6 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import java.util.List;
 
@@ -50,4 +53,18 @@ public class ControladorTecnologia {
         tecnologiaRepository.delete(existente);
         return ResponseEntity.noContent().build();
     }
+    
+    @GetMapping("/ranking")
+    @Operation(summary = "Ranking de tecnologias por quantidade de projetos")
+    public ResponseEntity<List<Map<String, Object>>> ranking() {
+    List<Object[]> resultado = tecnologiaRepository.rankingPorQuantidadeDeProjetos();
+    List<Map<String, Object>> ranking = new ArrayList<>();
+    for (Object[] linha : resultado) {
+        Map<String, Object> item = new HashMap<>();
+        item.put("tecnologia", linha[0]);
+        item.put("totalProjetos", linha[1]);
+        ranking.add(item);
+    }
+    return ResponseEntity.ok(ranking);
+}
 }

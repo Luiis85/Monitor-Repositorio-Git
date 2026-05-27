@@ -7,11 +7,7 @@ import java.util.Optional;
 
 /*
  * Interface de acesso ao banco para a tabela "dev_user".
- *
- * O Spring Data JPA gera todo o código SQL automaticamente.
- * Não precisamos escrever nenhuma query na mão - basta declarar
- * o método com o nome certo e o Spring faz o resto.
- */
+ * O Spring Data JPA gera todo o código SQL automaticamente.*/
 @Repository
 public interface UsuarioRepository extends JpaRepository<DevUser, Long> {
 

@@ -16,16 +16,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/*
- * Camada de serviço: aqui fica toda a lógica do sistema.
- *
- * Essa classe é responsável por:
- * - Chamar a API do GitHub
- * - Converter os dados recebidos para nossas entidades
- * - Salvar tudo no banco
- * - Montar o relatório agregado
- * - Operações de CRUD do DevUser
- */
 @Service
 public class ServicoGitHub {
 
@@ -50,11 +40,8 @@ public class ServicoGitHub {
 
     @Autowired
     private FavoritoRepository favoritoRepository;
-
-    // =========================================================
     // IMPORTAR USUÁRIO
     // Consulta o GitHub, salva o usuário e seus repositórios
-    // =========================================================
     public DevUser importarUsuario(String login) {
 
         // Se o usuário já foi importado antes, retorna o que está no banco
@@ -88,9 +75,7 @@ public class ServicoGitHub {
         return usuarioSalvo;
     }
 
-    // =========================================================
-    // CONSULTAR PERFIL NA API DO GITHUB
-    // =========================================================
+    // CONSULTAR PERFIL NA A
     private DadosUsuarioGitHub consultarPerfilNaApi(String login) {
         try {
             String url = URL_BASE_GITHUB + "/users/" + login;
@@ -112,9 +97,7 @@ public class ServicoGitHub {
         // Erros de rede (sem conexão, timeout) sobem para o TratadorDeErros
     }
 
-    // =========================================================
     // IMPORTAR REPOSITÓRIOS DO USUÁRIO
-    // =========================================================
     private void importarRepositoriosDoUsuario(DevUser usuario) {
         try {
             String url = URL_BASE_GITHUB + "/users/" + usuario.getLogin() + "/repos?per_page=10";
@@ -150,10 +133,6 @@ public class ServicoGitHub {
         }
     }
 
-    // =========================================================
-    // BUSCAR OU CADASTRAR TECNOLOGIA
-    // Evita duplicatas: se "Java" já existe, reutiliza; senão, cria
-    // =========================================================
     private Tecnologia buscarOuCadastrarTecnologia(String nome) {
         return tecnologiaRepository.findByNome(nome)
             .orElseGet(() -> {
@@ -163,9 +142,7 @@ public class ServicoGitHub {
             });
     }
 
-    // =========================================================
     // GRAVAR REGISTRO DE CONSULTA (log de auditoria)
-    // =========================================================
     private void gravarRegistroDeConsulta(DevUser usuario, String endereco, String resultado) {
         RegistroConsulta registro = new RegistroConsulta();
         registro.setRealizadaEm(LocalDateTime.now());
@@ -175,10 +152,8 @@ public class ServicoGitHub {
         consultaRepository.save(registro);
     }
 
-    // =========================================================
     // RELATÓRIO AGREGADO
     // Combina dados do banco local com dados em tempo real da API
-    // =========================================================
     public RelatorioUsuario gerarRelatorio(String login) {
 
         // Busca o usuário no banco — lança 404 se não existir
@@ -214,10 +189,7 @@ public class ServicoGitHub {
 
         return relatorio;
     }
-
-    // =========================================================
     // CRUD DO DEVUSER
-    // =========================================================
 
     public List<DevUser> listarTodos() {
         return usuarioRepository.findAll();
